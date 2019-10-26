@@ -1,0 +1,30 @@
+public void Main(string argument)
+
+{
+  
+   string BlockName = "WelderBed";
+   List<IMyTerminalBlock> targets = new List<IMyTerminalBlock>();
+   GridTerminalSystem.SearchBlocksOfName(BlockName, targets);
+
+   Echo("Finished Step1 : " + targets.Count);
+
+   List<IMyShipWelder> stargets = new List<IMyShipWelder>();
+
+   foreach(var obj in targets)
+   {
+       if (obj is IMyShipWelder)
+       {
+           stargets.Add((IMyShipWelder)obj);
+       }
+   }
+
+   Echo("Finished Step2 : " + stargets.Count);
+
+   foreach(var obj in stargets)
+   {
+   obj.ApplyAction("OnOff_" + argument);
+   }
+
+   Echo("Argument : " + argument);
+
+}
