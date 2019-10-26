@@ -1,0 +1,146 @@
+double lastTime = 0;                           // time since launch of program since timer activates this program.  Increments on each run, which is assumed to happen each sec.
+double noDetection = 0;
+
+double inOpenEvent = 0;
+double inCloseEvent = 0;
+double outOpenEvent = 0;
+double outCloseEvent = 0;
+
+string doornameIn = "Door Front In";
+string doornameOut = "Door Front Out";
+string sensornameIn = "Sensor In";
+string sensornameOut = "Sensor Out";
+
+
+// If no sensors are detecting for 10 seconds, close both doors
+// If in sensor is triggered, set in door open event in +0.5 sec, in door close event in +1 sec, out door open event in +2 sec
+// If out sensor is triggered, set out door open event in +0.5 sec, out door close event in +1 sec, in door open event in +2 sec
+// If both sensors are triggered, ignore 
+
+public Program()
+{
+   Runtime.UpdateFrequency = UpdateFrequency.Update1;
+}
+
+public void Main (string argument) 
+{
+
+   var DoorIn = GridTerminalSystem.GetBlockWithName(doornameIn) as IMyDoor;   
+   var DoorOut = GridTerminalSystem.GetBlockWithName(doornameOut) as IMyDoor;   
+   var SensorIn = GridTerminalSystem.GetBlockWithName(sensornameIn) as IMySensorBlock;   
+   var SensorOut = GridTerminalSystem.GetBlockWithName(sensornameOut) as IMySensorBlock;   
+
+   Clock("");
+   
+   if (SensorIn.IsActive && inOpenEvent == 0 && outOpenEvent == 0 && outCloseEvent == 0 && inCloseEvent == 0)
+   {
+       inOpenEvent = lastTime + 0.1;
+       inCloseEvent = lastTime + 2;
+       outOpenEvent = lastTime + 4;
+       outCloseEvent = lastTime + 10;
+   }
+   else if (SensorOut.IsActive && outOpenEvent == 0 && inOpenEvent == 0 && outCloseEvent == 0 && inCloseEvent == 0)
+   {
+       outOpenEvent = lastTime + 0.1;
+       outCloseEvent = lastTime + 2;
+       inOpenEvent = lastTime + 4;
+       inCloseEvent = lastTime + 10;
+   }
+   else if (noDetection > 10 && outCloseEvent == 0 && inCloseEvent == 0)
+   {
+       inCloseEvent = lastTime + 0.1;
+       outCloseEvent = lastTime + 0.1;
+       noDetection = 0;
+   }
+   else if (SensorIn.IsActive && SensorIn.IsActive)
+   {
+       inCloseEvent = lastTime + 0.1;
+       outCloseEvent = lastTime + 0.1;
+   }
+   else
+   {
+
+   }
+
+   if (lastTime > inOpenEvent && inOpenEvent != 0 && DoorOut.OpenRatio == 0)
+   {
+       inOpenEvent = 0;
+       OpenDoor(doornameIn);
+   } 
+
+   if (lastTime > outOpenEvent && outOpenEvent != 0 && DoorIn.OpenRatio == 0)
+   {
+       outOpenEvent = 0;
+       OpenDoor(doornameOut);
+   } 
+   
+   if (lastTime > inCloseEvent && inCloseEvent != 0)
+   {
+       inCloseEvent = 0;
+       CloseDoor(doornameIn);
+   } 
+
+   if (lastTime > outCloseEvent && outCloseEvent != 0)
+   {
+       outCloseEvent = 0;
+       CloseDoor(doornameOut);
+   } 
+
+   Echo("In Open Event : " + inOpenEvent);
+   Echo("In Close Event : " + inCloseEvent);
+   Echo("Out Open Event : " + outOpenEvent);
+   Echo("Out Close Event : " + outCloseEvent);
+
+}
+
+
+
+public void OpenDoor(string argument)
+{
+
+   var target = GridTerminalSystem.GetBlockWithName(argument) as IMyDoor;
+   target.ApplyAction("Open_On");
+   
+}
+
+public void CloseDoor(string argument)
+{
+
+   var target = GridTerminalSystem.GetBlockWithName(argument) as IMyDoor;
+   target.ApplyAction("Open_Off");
+   
+}
+
+public int CheckDoorStatus(string argument)
+{
+
+   var target = GridTerminalSystem.GetBlockWithName(argument) as IMyDoor;
+   return (int) target.OpenRatio;
+   
+}
+
+
+public void Clock(string argument)
+
+{
+
+
+lastTime = lastTime + Runtime.TimeSinceLastRun.TotalSeconds ;
+
+Echo("Total Script Time: " + lastTime.ToString()); 
+
+var SensorIn = GridTerminalSystem.GetBlockWithName(sensornameIn) as IMySensorBlock;   
+var SensorOut = GridTerminalSystem.GetBlockWithName(sensornameOut) as IMySensorBlock;   
+
+if (SensorIn.IsActive || SensorOut.IsActive)
+   {
+   noDetection = 0;
+   }
+else
+   {
+   noDetection = noDetection + Runtime.TimeSinceLastRun.TotalSeconds ;
+   }
+
+Echo("No Detection Time: " + noDetection.ToString()); 
+
+}
