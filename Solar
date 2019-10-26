@@ -1,0 +1,37 @@
+float lastOutput = 0;
+float lastlastOutput = 0;
+float incrSpeed = 0.2f;
+
+public Program()
+{
+Runtime.UpdateFrequency = UpdateFrequency.Update100;
+}
+
+public void Main(string argument)
+
+{
+
+ 
+   string SPanName = "Solar Panel";
+   string RotorName = "Advanced Rotor Solar";
+   var targetRotor = GridTerminalSystem.GetBlockWithName(RotorName) as IMyMotorStator;
+   var targetSPan = GridTerminalSystem.GetBlockWithName(SPanName) as IMySolarPanel;
+   float currentOutput = targetSPan.MaxOutput;
+
+   Echo("Current : " + currentOutput);
+   Echo("Last : " + lastOutput);
+   Echo("2 Prior : " + lastlastOutput);
+   Echo("Angle : " + (targetRotor.Angle / (float)Math.PI * 180f));
+
+	  if(currentOutput == -1) Echo("No data recieved");
+	  else if(currentOutput < 0.1f && lastOutput < 0.1f) targetRotor.SetValueFloat("Velocity", 0.2f);
+	  else if(currentOutput < lastlastOutput) targetRotor.SetValueFloat("Velocity", -0.2f);
+	  else targetRotor.SetValueFloat("Velocity", 0.2f);
+
+  Echo("V : " + targetRotor.TargetVelocityRPM);
+
+   lastlastOutput = lastOutput;
+   lastOutput = currentOutput;
+
+
+}
