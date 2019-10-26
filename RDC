@@ -1,0 +1,215 @@
+string positionset = "";
+string dockingpositionset = "";
+
+public Program()
+{
+Runtime.UpdateFrequency = UpdateFrequency.Update1;
+}
+
+public void Main(string argument)
+
+{
+
+
+string Arm1Name = "Programmable block Arm1";
+string Arm2Name = "Programmable block Arm2";
+string Arm3Name = "Programmable block Arm3";
+string Arm4Name = "Programmable block Arm4";
+string Arm5Name = "Programmable block Arm5";
+string Arm6Name = "Programmable block Arm6";
+string DockName = "Programmable block Dock";
+string WeldbedName = "Programmable block Welder OnOff";
+
+Echo("Functional ");
+
+argument = Me.TerminalRunArgument;
+
+ParsePosition(argument);
+
+ArmControl(Arm1Name, positionset);
+ArmControl(Arm2Name, positionset);
+ArmControl(Arm3Name, positionset);
+ArmControl(Arm4Name, positionset);
+ArmControl(Arm5Name, positionset);
+ArmControl(Arm6Name, positionset);
+ArmControl(DockName, dockingpositionset.ToString());
+
+if (positionset.Contains("w")) 
+   {
+   ArmControl(WeldbedName, "On");
+   }
+else
+   {
+   ArmControl(WeldbedName, "Off");
+   }
+
+CheckInParam();
+
+}
+
+
+public void ParsePosition (string argument)   //  any numerical will be considered position code, with lower position taking priority.  Any w will be considered welding will be in progress.
+{
+Echo("Parsed Argument : " + argument);
+
+if (argument.Contains("0")) 
+   {
+   positionset = "0";
+   }
+else if (argument.Contains("1"))
+   {
+   positionset = "1";
+   }
+else if (argument.Contains("2"))
+   {
+   positionset = "2";
+   }
+else if (argument.Contains("3"))
+   {
+   positionset = "3";
+   }
+else if (argument.Contains("4"))
+   {
+   positionset = "4";
+   }
+else if (argument.Contains("5"))
+   {
+   positionset = "5";
+   }
+else if (argument.Contains("6"))
+   {
+   positionset = "6";
+   }
+else if (argument.Contains("7"))
+   {
+   positionset = "7";
+   }
+else if (argument.Contains("8"))
+   {
+   positionset = "8";
+   }
+else if (argument.Contains("9"))
+   {
+   positionset = "9";
+   }
+else
+   {
+   positionset = "0";
+   }
+
+if (argument.ToLower().Contains("w")) 
+   {
+   positionset = positionset +"w";
+   }
+
+
+if (argument.ToLower().Contains("a")) 
+   {
+   dockingpositionset = "0";
+   }
+else if (argument.ToLower().Contains("b")) 
+   {
+   dockingpositionset = "1";
+   }
+else if  (argument.ToLower().Contains("c")) 
+   {
+   dockingpositionset = "2";
+   }
+else if  (argument.ToLower().Contains("d")) 
+   {
+   dockingpositionset = "3";
+   }
+else if  (argument.ToLower().Contains("e")) 
+   {
+   dockingpositionset = "4";
+   }
+else if  (argument.ToLower().Contains("f")) 
+   {
+   dockingpositionset = "5";
+   }
+else 
+   {
+   dockingpositionset = "0";
+   }
+
+}
+
+public void ArmControl(string targetName, string argument)
+{
+
+   var target = GridTerminalSystem.GetBlockWithName(targetName) as IMyProgrammableBlock;
+   target.TryRun(argument);
+   Echo(targetName + " : " + argument);
+
+}
+
+public bool CheckInParam()
+{
+
+   int inparam = 0;
+
+   string[] rotors = new string[] 
+   {
+   "Advanced Rotor 1-1",
+   "Advanced Rotor 1-2",
+   "Advanced Rotor 2-1",
+   "Advanced Rotor 2-2",
+   "Advanced Rotor 3-1",
+   "Advanced Rotor 3-2",
+   "Advanced Rotor 4-1",
+   "Advanced Rotor 4-2",
+   "Advanced Rotor 5-1",
+   "Advanced Rotor 5-2",
+   "Advanced Rotor 6-1",
+   "Advanced Rotor 6-2"
+   };
+
+   string[] pistons = new string[] 
+   {
+   "Piston 1-1",
+   "Piston 2-1",
+   "Piston 3-1",
+   "Piston 4-1",
+   "Piston 5-1",
+   "Piston 6-1",
+   "Piston 1-2",
+   "Piston 2-2",
+   "Piston 3-2",
+   "Piston 4-2",
+   "Piston 5-2",
+   "Piston 6-2",   
+   "Piston Docking"
+   };
+
+   foreach (string thisrotor in rotors)
+   {
+       var rotorobj = GridTerminalSystem.GetBlockWithName(thisrotor) as IMyMotorStator;
+       if (rotorobj.TargetVelocityRPM == 0f) 
+       {
+           inparam++;
+       }
+   }
+
+   foreach (string thispiston in pistons)
+   {
+       var pistonobj = GridTerminalSystem.GetBlockWithName(thispiston) as IMyPistonBase;
+       if (pistonobj.Velocity == 0f) 
+       {
+           inparam++;
+       }
+   }
+   
+   float inparampct = (float)inparam / ((float)rotors.Length + (float)pistons.Length) * 100;
+   Echo("In parameter parts = " + inparam + " out of " + (rotors.Length + pistons.Length));
+   Echo("In parameter % = " + inparampct + "%");
+   
+   if (inparampct > 90) 
+       {
+           return true;
+       }
+   else
+       {
+           return false;
+       }
+
+}
