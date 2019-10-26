@@ -1,0 +1,93 @@
+int positionset = 0;
+
+public void Main (string argument)
+{
+Echo("Argument = " + argument);
+
+float[] positions = new float[]{0, 2,4,6,8,10};
+
+string codearg = argument;
+ParsePosition(codearg);
+SetPistonPosition ("Piston Docking", positions[positionset]);
+
+}
+
+public void ParsePosition (string argument)   //  any numerical will be considered position code, with lower position taking priority.  Any w will be considered welding will be in progress.
+{
+Echo("Parsed Argument : " + argument);
+
+if (argument.Contains("0")) 
+   {
+   positionset = 0;
+   }
+else if (argument.Contains("1"))
+   {
+   positionset = 1;
+   }
+else if (argument.Contains("2"))
+   {
+   positionset = 2;
+   }
+else if (argument.Contains("3"))
+   {
+   positionset = 3;
+   }
+else if (argument.Contains("4"))
+   {
+   positionset = 4;
+   }
+else if (argument.Contains("5"))
+   {
+   positionset = 5;
+   }
+else if (argument.Contains("6"))
+   {
+   positionset = 6;
+   }
+else if (argument.Contains("7"))
+   {
+   positionset = 7;
+   }
+else if (argument.Contains("8"))
+   {
+   positionset = 8;
+   }
+else if (argument.Contains("9"))
+   {
+   positionset = 9;
+   }
+else
+   {
+   positionset = 0;
+   }
+
+}
+
+public void SetPistonPosition (string argument, float targetPosition)
+{
+
+   float stdSpeed = 2;
+   var targetPiston = GridTerminalSystem.GetBlockWithName(argument) as IMyPistonBase;
+   float currentPosition = targetPiston.CurrentPosition;
+   
+   Echo("Piston:" + argument);
+   Echo("Current Position:" + currentPosition.ToString());
+   Echo("Target Position:" + targetPosition.ToString());
+   
+   if (Math.Abs(currentPosition-targetPosition) < 0.1f) 
+   {
+       targetPiston.SetValue<float>("Velocity", 0);
+       return;
+   }  
+   else
+   {
+       if (currentPosition < targetPosition) 
+       {
+           targetPiston.SetValue<float>("Velocity", stdSpeed); 
+       }
+       else
+       {
+           targetPiston.SetValue<float>("Velocity", stdSpeed*-1); 
+       }   
+   }
+}
