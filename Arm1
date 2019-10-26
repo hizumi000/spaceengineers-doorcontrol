@@ -1,0 +1,173 @@
+int positionset = 0;
+int weldingpos = 0;
+
+public void Main (string argument)
+{
+Echo("Argument = " + argument);
+
+float[,,] positions = new float[,,] {
+{{280, 190, 5f, 0f}, {295, 205, 5f, 0f}, {300, 210, 7.5f, 0f}, {310, 220, 9f, 0f}, {315, 225, 10f, 0f}, {335, 245, 9f, 0f}, {360, 360, 0f, 0f}},
+{{280, 190, 5f, 10f}, {295, 205, 5f, 10f}, {300, 210, 7.5f, 10f}, {310, 220, 9f, 10f}, {315, 225, 10f, 10f}, {335, 245, 9f, 10f}, {360, 360, 0f, 0f}}
+};
+
+string codearg = argument;
+ParsePosition(codearg);
+
+string[] status = new string[]{"","","",""};
+
+status[0] = SetRotorPosition ("Advanced Rotor 1-1", positions[weldingpos, positionset,0]);
+status[1] = SetRotorPosition ("Advanced Rotor 1-2", positions[weldingpos, positionset,1]);
+
+status[2] = SetPistonPosition ("Piston 1-1", positions[weldingpos, positionset,2]);
+status[3] = SetPistonPosition ("Piston 1-2", positions[weldingpos, positionset,3]);
+
+SetWelderStatus ("Arm 1 Welder", weldingpos);
+
+string returnline = status[0] + "/" + status[1] + "/" + status[2] + "/" + status[3];
+Echo(returnline);
+return;
+
+}
+
+public void ParsePosition (string argument)   //  any numerical will be considered position code, with lower position taking priority.  Any w will be considered welding will be in progress.
+{
+Echo("Parsed Argument : " + argument);
+
+if (argument.Contains("0")) 
+   {
+   positionset = 0;
+   }
+else if (argument.Contains("1"))
+   {
+   positionset = 1;
+   }
+else if (argument.Contains("2"))
+   {
+   positionset = 2;
+   }
+else if (argument.Contains("3"))
+   {
+   positionset = 3;
+   }
+else if (argument.Contains("4"))
+   {
+   positionset = 4;
+   }
+else if (argument.Contains("5"))
+   {
+   positionset = 5;
+   }
+else if (argument.Contains("6"))
+   {
+   positionset = 6;
+   }
+else if (argument.Contains("7"))
+   {
+   positionset = 7;
+   }
+else if (argument.Contains("8"))
+   {
+   positionset = 8;
+   }
+else if (argument.Contains("9"))
+   {
+   positionset = 9;
+   }
+else
+   {
+   positionset = 0;
+   }
+
+if (argument.Contains("w")) 
+   {
+   weldingpos = 1;
+   }
+else
+   {
+   weldingpos = 0;
+   }
+
+}
+
+public string SetRotorPosition (string argument, float targetPosition)
+{
+
+   float stdSpeed = 2;
+   var targetRotor = GridTerminalSystem.GetBlockWithName(argument) as IMyMotorStator;
+   float currentAngle = targetRotor.Angle / (float)Math.PI * 180f;
+   
+   Echo("Rotor:" + argument);
+   Echo("Current Angle:" + currentAngle.ToString());
+   Echo("Target Angle:" + targetPosition.ToString());
+   
+   if (Math.Abs(currentAngle-targetPosition) < 0.5) 
+   {
+       targetRotor.SetValue<float>("Velocity", 0);
+       return ("In_Param");
+   }  
+   else
+   {
+       if (currentAngle < targetPosition) 
+       {
+           targetRotor.SetValue<float>("Velocity", stdSpeed); 
+       }
+       else
+       {
+           targetRotor.SetValue<float>("Velocity", stdSpeed*-1); 
+       }   
+       return ("NotIn_Param");
+   }
+}
+
+public string SetPistonPosition (string argument, float targetPosition)
+{
+
+   float stdSpeed = 5;
+   var targetPiston = GridTerminalSystem.GetBlockWithName(argument) as IMyPistonBase;
+   float currentPosition = targetPiston.CurrentPosition;
+   
+   Echo("Piston:" + argument);
+   Echo("Current Position:" + currentPosition.ToString());
+   Echo("Target Position:" + targetPosition.ToString());
+   
+   if (Math.Abs(currentPosition-targetPosition) < 0.1f) 
+   {
+       targetPiston.SetValue<float>("Velocity", 0);
+       return ("In_Param");
+   }  
+   else
+   {
+       if (currentPosition < targetPosition) 
+       {
+           targetPiston.SetValue<float>("Velocity", stdSpeed); 
+       }
+       else
+       {
+           targetPiston.SetValue<float>("Velocity", stdSpeed*-1); 
+       }   
+       
+       if(targetPiston.Status == 0)
+       {
+           return ("In_Param");
+       }
+       else
+       {
+           return ("NotIn_Param: " + targetPiston.Status);
+       }
+   }
+}
+
+public void SetWelderStatus (string argument, int weldstate)
+{
+
+   var targetWelder = GridTerminalSystem.GetBlockWithName(argument) as IMyShipWelder;
+   if (weldstate == 1) 
+   { 
+       targetWelder.ApplyAction("OnOff_On");
+   }
+   else
+   {
+       targetWelder.ApplyAction("OnOff_Off");
+   }
+
+}
