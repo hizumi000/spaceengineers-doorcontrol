@@ -1,0 +1,235 @@
+// Execute launch sequence by 
+// 0. Opening the hatch
+// 1. Once hatch is open, check inventory and fire missile from largest inventory and smallest tube number, loop designated times
+// 2. Close the hatch
+// 3. Initialize variables and turn off me
+
+int currentStep = 0;
+int salvoSize = 0;
+int alreadyShot = 0;
+int lasttotalAmmo = 0;
+int totalAmmo = 0;
+string hatchnameL = "Rotor Left";
+string hatchnameR = "Rotor Right";
+string [] launchersname = new string [] {"Rocket Launcher 1", "Rocket Launcher 2", "Rocket Launcher 3"};
+
+public Program()
+{
+Runtime.UpdateFrequency = UpdateFrequency.Update1;
+}
+
+
+public void Main(string argument)
+
+{
+
+   Echo("TerminalArgument" + Me.TerminalRunArgument);   
+   Echo ("argument = " + argument);
+
+//   if (argument != "")
+//   {
+//       salvoSize = Convert.ToInt32(argument);
+//   }
+//   else if(Me.TerminalRunArgument != "")
+//   {
+//      salvoSize = Convert.ToInt32(Me.TerminalRunArgument);
+//   }
+
+   Echo ("Current Step = " + currentStep);
+   Echo ("CurrentAmmo : " + lasttotalAmmo); 
+   Echo ("Salvo Size : " + salvoSize);
+ 
+  if (lasttotalAmmo == 0)
+   {
+       lasttotalAmmo = GetTotalAmmo("");      
+   }
+
+   Echo("Start.  Current Step = " + currentStep);
+   if (currentStep == 0 || currentStep == 2) 
+   {
+       HatchAction (currentStep);
+   }
+
+   else if (currentStep == 1)
+   {      
+       
+       totalAmmo = GetTotalAmmo("");
+       alreadyShot = alreadyShot + (lasttotalAmmo - totalAmmo);
+       lasttotalAmmo = totalAmmo;
+     
+       if (alreadyShot >= salvoSize)
+       {
+           currentStep = 2;
+       }
+       else
+       {
+           FireAction (currentStep);
+       }
+
+   }
+
+   else if (currentStep == 3)
+   {
+      currentStep = 0; 
+      alreadyShot = 0;
+      Me.ApplyAction("OnOff_Off");
+      return;
+   }
+
+
+}
+
+
+public int GetTotalAmmo (string argument)
+{
+
+   int Counter = 0;   
+
+   foreach (string launcher in launchersname)
+   {
+   
+       int thislauncherInv = 0;
+ 
+       var targetMissile = GridTerminalSystem.GetBlockWithName(launcher) as IMySmallMissileLauncher;
+       List<MyInventoryItem> inventoryList = new List<MyInventoryItem>();
+       inventoryList.Clear();
+       targetMissile.GetInventory(0).GetItems(inventoryList);
+
+       foreach (MyInventoryItem item in inventoryList)
+       {
+            thislauncherInv += (int)item.Amount;
+        }
+
+       Counter = Counter + thislauncherInv;
+
+   }
+   
+   return Counter;
+
+}
+
+public void HatchAction (int argument)
+{
+
+   var targetRotorL = GridTerminalSystem.GetBlockWithName(hatchnameL) as IMyMotorStator;
+   var targetRotorR = GridTerminalSystem.GetBlockWithName(hatchnameR) as IMyMotorStator;
+   
+   float stdSpeed = 30f;
+   float currentPositionL = targetRotorL.Angle / (float)Math.PI * 180f;
+   float currentPositionR = targetRotorR.Angle / (float)Math.PI * 180f;
+   float targetPositionL = 0;
+   float targetPositionR = -1;
+
+   if (argument == 0 || argument == 1 ) 
+   {
+   targetPositionL = 95;
+   targetPositionR = -95;
+   }
+
+   Echo("Current Step :" + argument);
+
+   Echo("HatchL:" + hatchnameL);
+   Echo("Current PositionL:" + currentPositionL.ToString());
+   Echo("Target PositionL:" + targetPositionL.ToString());
+ 
+   Echo("HatchR:" + hatchnameR);
+   Echo("Current PositionR:" + currentPositionR.ToString());
+   Echo("Target PositionR:" + targetPositionR.ToString());
+   
+   if (Math.Abs(currentPositionL-targetPositionL) < 3) 
+   {     
+       targetRotorL.SetValue<float>("Velocity", 0);
+   }
+   else
+   {
+       if (currentPositionL < targetPositionL) 
+       {
+           targetRotorL.SetValue<float>("Velocity", stdSpeed); 
+       }
+       else
+       {
+           targetRotorL.SetValue<float>("Velocity", stdSpeed*-1); 
+       }   
+       Echo("Left Not In Parameter");
+   }
+
+   if (Math.Abs(currentPositionR-targetPositionR) < 3) 
+   {     
+       targetRotorR.SetValue<float>("Velocity", 0);
+   }
+   else
+   {
+       if (currentPositionR > targetPositionR) 
+       {
+           targetRotorR.SetValue<float>("Velocity", stdSpeed*-1); 
+       }
+       else
+       {
+           targetRotorR.SetValue<float>("Velocity", stdSpeed); 
+       }   
+       Echo("Right Not In Parameter");
+   }
+
+   if (Math.Abs(currentPositionL-targetPositionL) < 3 && Math.Abs(currentPositionR-targetPositionR) < 3) 
+   {
+       if (argument == 0)
+       {
+           currentStep = 1;
+           return;  
+       }
+       else if (argument == 2)
+       {
+           currentStep = 3;
+           return;  
+       }
+       else
+       {
+           return;  
+       }
+   }
+}
+
+public void FireAction (int argument)
+{
+
+   string selectLauncher = launchersname[0];
+   int selectLauncherInv = 0;
+
+   int totalAmmo = 0;   
+
+   foreach (string launcher in launchersname)
+   {
+   
+       int thislauncherInv = 0;
+ 
+       var targetMissile = GridTerminalSystem.GetBlockWithName(launcher) as IMySmallMissileLauncher;
+       List<MyInventoryItem> inventoryList = new List<MyInventoryItem>();
+       inventoryList.Clear();
+       targetMissile.GetInventory(0).GetItems(inventoryList);
+
+       foreach (MyInventoryItem item in inventoryList)
+       {
+            thislauncherInv += (int)item.Amount;
+       }
+
+       if (selectLauncherInv < thislauncherInv)
+       {
+           selectLauncherInv = thislauncherInv;
+           selectLauncher = launcher;
+       } 
+
+       totalAmmo = totalAmmo + thislauncherInv;
+
+   }       
+
+   if (lasttotalAmmo < totalAmmo) 
+   {
+       lasttotalAmmo = totalAmmo;
+   }
+
+    Echo (selectLauncher + " : " + selectLauncherInv.ToString());
+
+    var fireMissile = GridTerminalSystem.GetBlockWithName(selectLauncher) as IMySmallMissileLauncher;
+    fireMissile.ApplyAction("ShootOnce");
+
+}
