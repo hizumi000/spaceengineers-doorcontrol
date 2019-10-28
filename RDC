@@ -10,7 +10,6 @@ public void Main(string argument)
 
 {
 
-
 string Arm1Name = "Programmable block Arm1";
 string Arm2Name = "Programmable block Arm2";
 string Arm3Name = "Programmable block Arm3";
